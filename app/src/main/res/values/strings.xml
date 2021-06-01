@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">NearByPlacesApp</string>
+    <string name="place_image">Place Image</string>
+</resources>

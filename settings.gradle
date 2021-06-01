@@ -1,0 +1,2 @@
+rootProject.name = "NearByPlacesApp"
+include ':app'
