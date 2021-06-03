@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/realtime_menu_option"
+        android:title="@string/realtime"
+        android:visible="false"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/single_time_menu_option"
+        android:title="@string/single_update"
+        app:showAsAction="ifRoom" />
+</menu>

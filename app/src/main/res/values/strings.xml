@@ -1,4 +1,10 @@
 <resources>
-    <string name="app_name">NearByPlacesApp</string>
+    <string name="app_name">NearBy</string>
     <string name="place_image">Place Image</string>
+    <string name="error_image_content_desc">Image describing error</string>
+    <string name="no_data">No data found !!</string>
+    <string name="wrong_error">Something went wrong !!</string>
+    <string name="please_wait">Please Wait…</string>
+    <string name="realtime">Realtime</string>
+    <string name="single_update">Single Update</string>
 </resources>
