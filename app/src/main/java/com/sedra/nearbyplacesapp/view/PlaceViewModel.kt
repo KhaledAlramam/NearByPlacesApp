@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.liveData
 import com.sedra.nearbyplacesapp.data.PlaceRepository
+import com.sedra.nearbyplacesapp.data.model.ItemsMapper
 import com.sedra.nearbyplacesapp.util.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -18,15 +19,16 @@ class PlaceViewModel @Inject constructor(
     fun getNearbyPlaces(latitude: Double, longitude: Double) = liveData(Dispatchers.IO) {
         emit(Resource.Loading)
         try {
+            val response = repository.getRecommendedPlaces(
+                "W1BBIACSZHMTRJ4M5TJ5R2SR2YINIS5AO2WYGUV5OO3QW4BE",
+                "HSVOREBK5XNHLHPZ0AS10QIHOPWSJPJTDOJKRFZDTJREYTME",
+                "$latitude,$longitude",
+                "20210602",
+                1000
+            )
             emit(
                 Resource.Success(
-                    data = repository.getRecommendedPlaces(
-                        "W1BBIACSZHMTRJ4M5TJ5R2SR2YINIS5AO2WYGUV5OO3QW4BE",
-                        "HSVOREBK5XNHLHPZ0AS10QIHOPWSJPJTDOJKRFZDTJREYTME",
-                        "$latitude,$longitude",
-                        "20210602",
-                        1000
-                    )
+                    data = ItemsMapper.getItems(response.response)
                 )
             )
         } catch (exception: Exception) {

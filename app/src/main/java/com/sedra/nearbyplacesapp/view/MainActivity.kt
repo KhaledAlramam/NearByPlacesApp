@@ -17,7 +17,6 @@ import androidx.core.view.isVisible
 import androidx.databinding.DataBindingUtil
 import com.sedra.nearbyplacesapp.LocationInteractor
 import com.sedra.nearbyplacesapp.R
-import com.sedra.nearbyplacesapp.data.model.Group
 import com.sedra.nearbyplacesapp.data.model.Venue
 import com.sedra.nearbyplacesapp.databinding.ActivityMainBinding
 import com.sedra.nearbyplacesapp.util.Resource
@@ -60,20 +59,17 @@ class MainActivity : AppCompatActivity() {
                         R.drawable.connection_error
                     )
                     Resource.Loading -> if (placeAdapter.currentList.isEmpty()) showLoadingIndicator()
-                    is Resource.Success -> if (resource.data.response.groups.isEmpty()) {
+                    is Resource.Success -> if (resource.data.isEmpty()) {
                         showErrorMessage(getString(R.string.no_data), R.drawable.no_data)
                     } else {
-                        populateAdapter(resource.data.response.groups)
+                        populateAdapter(resource.data)
                     }
                 }
             }
         }
     }
 
-    private fun populateAdapter(groups: List<Group>) {
-        val venueList = groups[0].items.map {
-            it.venue
-        }
+    private fun populateAdapter(venueList: List<Venue>) {
         binding.apply {
             placesRv.isVisible = true
             errorGroup.isVisible = false
