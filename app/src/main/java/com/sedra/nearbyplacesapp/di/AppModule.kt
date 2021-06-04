@@ -3,6 +3,7 @@ package com.sedra.nearbyplacesapp.di
 import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
+import com.sedra.nearbyplacesapp.BuildConfig
 import com.sedra.nearbyplacesapp.data.remote.ApiService
 import dagger.Module
 import dagger.Provides
@@ -22,14 +23,21 @@ object AppModule {
     @Singleton
     fun provideRetrofit(): Retrofit {
         val link = ApiService.BASE_URL
-        val interceptor = HttpLoggingInterceptor()
-        interceptor.apply { interceptor.level = HttpLoggingInterceptor.Level.BODY }
-        val client: OkHttpClient = OkHttpClient.Builder().addInterceptor(interceptor).build()
-        return Retrofit.Builder()
-            .baseUrl(link)
-            .client(client)
-            .addConverterFactory(MoshiConverterFactory.create())
-            .build()
+        return if (BuildConfig.DEBUG) {
+            val interceptor = HttpLoggingInterceptor()
+            interceptor.apply { interceptor.level = HttpLoggingInterceptor.Level.BODY }
+            val client: OkHttpClient = OkHttpClient.Builder().addInterceptor(interceptor).build()
+            Retrofit.Builder()
+                .baseUrl(link)
+                .client(client)
+                .addConverterFactory(MoshiConverterFactory.create())
+                .build()
+        } else {
+            Retrofit.Builder()
+                .baseUrl(link)
+                .addConverterFactory(MoshiConverterFactory.create())
+                .build()
+        }
     }
 
     @Provides

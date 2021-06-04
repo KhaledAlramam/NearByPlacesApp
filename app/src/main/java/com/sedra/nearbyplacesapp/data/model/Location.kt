@@ -8,7 +8,6 @@ data class Location(
     val crossStreet: String,
     val distance: Int,
     val formattedAddress: List<String>,
-    val labeledLatLngs: List<LabeledLatLng>,
     val lat: Double,
     val lng: Double,
     val postalCode: String,

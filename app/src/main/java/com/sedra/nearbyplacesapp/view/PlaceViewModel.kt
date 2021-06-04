@@ -1,5 +1,6 @@
 package com.sedra.nearbyplacesapp.view
 
+import android.content.SharedPreferences
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.liveData
 import com.sedra.nearbyplacesapp.data.PlaceRepository
@@ -10,7 +11,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class PlaceViewModel @Inject constructor(
-    private val repository: PlaceRepository
+    private val repository: PlaceRepository,
+    private val preferences: SharedPreferences
 ) : ViewModel() {
 
     fun getNearbyPlaces(latitude: Double, longitude: Double) = liveData(Dispatchers.IO) {
@@ -35,6 +37,12 @@ class PlaceViewModel @Inject constructor(
                 )
             )
         }
+    }
+
+    fun changeLocationMode(isRealTime: Boolean) {
+        val editor = preferences.edit()
+        editor.putBoolean(MainActivity.IS_REAL_TIME, isRealTime)
+        editor.apply()
     }
 
     fun getPlaceImage(venueId: String) = liveData(Dispatchers.IO) {

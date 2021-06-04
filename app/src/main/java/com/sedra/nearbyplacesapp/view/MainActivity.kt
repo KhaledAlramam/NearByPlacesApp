@@ -1,7 +1,6 @@
 package com.sedra.nearbyplacesapp.view
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.Location
@@ -17,8 +16,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.databinding.DataBindingUtil
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices.getFusedLocationProviderClient
+import com.sedra.nearbyplacesapp.LocationInteractor
 import com.sedra.nearbyplacesapp.R
 import com.sedra.nearbyplacesapp.data.model.Group
 import com.sedra.nearbyplacesapp.data.model.Venue
@@ -35,17 +33,17 @@ class MainActivity : AppCompatActivity() {
     lateinit var preferences: SharedPreferences
     private var realtimeRequestUpdate: Boolean = true
     private val viewModel by viewModels<PlaceViewModel>()
-    private var binding: ActivityMainBinding? = null
+    private lateinit var binding: ActivityMainBinding
     private val placeAdapter = PlaceAdapter()
-    private var fusedLocationProvider: FusedLocationProviderClient? = null
-    private var realtimeOptionsMenuItem: MenuItem? = null
-    private var singleTimeOptionsMenuItem: MenuItem? = null
+    private val locationInteractor = LocationInteractor()
+
+    private lateinit var realtimeOptionsMenuItem: MenuItem
+    private lateinit var singleTimeOptionsMenuItem: MenuItem
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
         realtimeRequestUpdate = preferences.getBoolean(IS_REAL_TIME, true)
-        Log.e("TAG", "onCreate: $realtimeRequestUpdate")
         if (permissionGranted()) {
             getLastLocation()
         } else {
@@ -54,7 +52,6 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    // call api to get places after fetching location
     private fun getNearbyPlaces(lat: Double, lng: Double) {
         viewModel.getNearbyPlaces(lat, lng).observe(this) {
             it?.let { resource ->
@@ -82,12 +79,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // fill adapter with data, Hide all views except recyclerView
     private fun populateAdapter(groups: List<Group>) {
         val venueList = groups[0].items.map {
             it.venue
         }
-        binding?.apply {
+        binding.apply {
             placesRv.isVisible = true
             errorGroup.isVisible = false
             loaderGroup.isVisible = false
@@ -96,11 +92,6 @@ class MainActivity : AppCompatActivity() {
         getPlacesPhotos(venueList)
     }
 
-
-    /**
-     * take places list, loop over them and get each place photo
-     * call placeAdapter function to notify each place item about its new image
-     * */
     private fun getPlacesPhotos(venueList: List<Venue>) {
         for (venue in venueList) {
             viewModel.getPlaceImage(venue.id).observe(this) {
@@ -127,9 +118,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Show Loading state and hide other views
     private fun showLoadingIndicator() {
-        binding?.apply {
+        binding.apply {
             loaderGroup.isVisible = true
             errorGroup.isVisible = false
             placesRv.isVisible = false
@@ -137,9 +127,8 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    // Helper function to show error message according to parameters
     private fun showErrorMessage(message: String, image: Int) {
-        binding?.apply {
+        binding.apply {
             errorImage.setImageDrawable(ContextCompat.getDrawable(this@MainActivity, image))
             errorText.text = message
             errorGroup.isVisible = true
@@ -150,23 +139,18 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    @SuppressLint("MissingPermission")
-    fun getLastLocation() {
-        fusedLocationProvider = getFusedLocationProviderClient(this)
-        fusedLocationProvider!!.lastLocation
-            .addOnSuccessListener { location -> // GPS location can be null if GPS is switched off
-                onLocationChanged(location)
-            }
-            .addOnFailureListener { e ->
-                showErrorMessage(getString(R.string.wrong_error), R.drawable.connection_error)
-                e.printStackTrace()
-            }
+    private fun getLastLocation() {
+        locationInteractor.locationLiveData.observe(this) {
+            onLocationChanged(it)
+        }
+        locationInteractor.getLastLocation(this)
     }
 
     private fun onLocationChanged(location: Location?) {
         location?.let {
             getNearbyPlaces(location.latitude, location.longitude)
         }
+        if (realtimeRequestUpdate) locationInteractor.startLocationUpdates()
     }
 
     //Helper function to check if location permission is granted
@@ -211,14 +195,26 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onPause() {
+        super.onPause()
+        locationInteractor.stopLocationUpdates()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (realtimeRequestUpdate) locationInteractor.startLocationUpdates()
+    }
+
+    // start realtime track
+
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         val inflater: MenuInflater = menuInflater
         inflater.inflate(R.menu.main_menu, menu)
         realtimeOptionsMenuItem = menu.findItem(R.id.realtime_menu_option)
-        realtimeOptionsMenuItem?.isVisible = !realtimeRequestUpdate
+        realtimeOptionsMenuItem.isVisible = !realtimeRequestUpdate
         singleTimeOptionsMenuItem = menu.findItem(R.id.single_time_menu_option)
-        singleTimeOptionsMenuItem?.isVisible = realtimeRequestUpdate
+        singleTimeOptionsMenuItem.isVisible = realtimeRequestUpdate
         return true
     }
 
@@ -227,13 +223,13 @@ class MainActivity : AppCompatActivity() {
         return when (item.itemId) {
             R.id.realtime_menu_option -> {
                 item.isVisible = false
-                singleTimeOptionsMenuItem?.isVisible = true
+                singleTimeOptionsMenuItem.isVisible = true
                 changeLocationMode(true)
                 true
             }
             R.id.single_time_menu_option -> {
                 item.isVisible = false
-                realtimeOptionsMenuItem?.isVisible = true
+                realtimeOptionsMenuItem.isVisible = true
                 changeLocationMode(false)
                 true
             }
@@ -247,22 +243,22 @@ class MainActivity : AppCompatActivity() {
 
     private fun changeLocationMode(isRealTime: Boolean) {
         realtimeRequestUpdate = isRealTime
-        val editor = preferences.edit()
-        editor.putBoolean(IS_REAL_TIME, isRealTime)
-        editor.apply()
+        if (realtimeRequestUpdate) {
+            locationInteractor.startLocationUpdates()
+        } else {
+            locationInteractor.stopLocationUpdates()
+        }
+        viewModel.changeLocationMode(isRealTime)
     }
 
     override fun onDestroy() {
-        binding = null
-        realtimeOptionsMenuItem = null
-        singleTimeOptionsMenuItem = null
-        fusedLocationProvider = null
+        locationInteractor.onDestroy()
         super.onDestroy()
     }
 
 
     companion object {
         private const val MY_PERMISSIONS_REQUEST_LOCATION = 99
-        private const val IS_REAL_TIME = "is_realtime"
+        const val IS_REAL_TIME = "is_realtime"
     }
 }
