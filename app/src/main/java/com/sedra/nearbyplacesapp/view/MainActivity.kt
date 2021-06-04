@@ -18,6 +18,7 @@ import androidx.databinding.DataBindingUtil
 import com.sedra.nearbyplacesapp.LocationInteractor
 import com.sedra.nearbyplacesapp.R
 import com.sedra.nearbyplacesapp.data.model.Venue
+import com.sedra.nearbyplacesapp.data.model.photo.PhotosMapper
 import com.sedra.nearbyplacesapp.databinding.ActivityMainBinding
 import com.sedra.nearbyplacesapp.util.Resource
 import dagger.hilt.android.AndroidEntryPoint
@@ -47,9 +48,14 @@ class MainActivity : AppCompatActivity() {
         } else {
             requestPermissions()
         }
-
     }
 
+
+    /**
+     * Call this function to start fetching and observing user location
+     * @param lat : latitude of user
+     * @param lng : longitude of user
+     */
     private fun getNearbyPlaces(lat: Double, lng: Double) {
         viewModel.getNearbyPlaces(lat, lng).observe(this) {
             it?.let { resource ->
@@ -69,6 +75,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * call to fill ui with data if valid venue
+     * @param venueList: List of places returned by viewModel
+     */
     private fun populateAdapter(venueList: List<Venue>) {
         binding.apply {
             placesRv.isVisible = true
@@ -79,6 +89,10 @@ class MainActivity : AppCompatActivity() {
         getPlacesPhotos(venueList)
     }
 
+    /**
+     * Loop over list of places to fetch each place Image sync
+     * @param venueList: current places list
+     */
     private fun getPlacesPhotos(venueList: List<Venue>) {
         for (venue in venueList) {
             viewModel.getPlaceImage(venue.id).observe(this) {
@@ -89,11 +103,9 @@ class MainActivity : AppCompatActivity() {
                         Resource.Loading -> {
                         }
                         is Resource.Success -> {
-                            if (resource.data.response.photos.items.isNotEmpty()) {
-                                placeAdapter.updateImageList(
-                                    resource.data.response.photos.items[0],
-                                    venueList.indexOf(venue)
-                                )
+                            val item = PhotosMapper.getPhotoItem(resource.data)
+                            if (item != null) {
+                                placeAdapter.updateImageList(item, venueList.indexOf(venue))
                             }
                         }
                     }
@@ -102,15 +114,21 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * show loader state on ui
+     */
     private fun showLoadingIndicator() {
         binding.apply {
             loaderGroup.isVisible = true
             errorGroup.isVisible = false
             placesRv.isVisible = false
         }
-
     }
 
+    /**
+     * Show desired Error message and image on ui
+     * @param message: message to be displayed according to situation
+     */
     private fun showErrorMessage(message: String, image: Int) {
         binding.apply {
             errorImage.setImageDrawable(ContextCompat.getDrawable(this@MainActivity, image))
@@ -123,12 +141,14 @@ class MainActivity : AppCompatActivity() {
     }
 
 
+    // Observe location data in location interceptor
     private fun getLastLocation() {
         locationInteractor.locationLiveData.observe(this) {
             onLocationChanged(it)
         }
         locationInteractor.getLastLocation(this)
     }
+
 
     private fun onLocationChanged(location: Location?) {
         location?.let {
@@ -155,6 +175,9 @@ class MainActivity : AppCompatActivity() {
     }
 
 
+    /**
+     * Permission granted ? get user location
+     */
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -189,12 +212,11 @@ class MainActivity : AppCompatActivity() {
         if (realtimeRequestUpdate) locationInteractor.startLocationUpdates()
     }
 
-    // start realtime track
-
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         val inflater: MenuInflater = menuInflater
         inflater.inflate(R.menu.main_menu, menu)
+        // Show suitable menu item according to mode (Realtime or single-time)
         realtimeOptionsMenuItem = menu.findItem(R.id.realtime_menu_option)
         realtimeOptionsMenuItem.isVisible = !realtimeRequestUpdate
         singleTimeOptionsMenuItem = menu.findItem(R.id.single_time_menu_option)
@@ -222,8 +244,11 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    // Used to store current mode in preference and swap between starting
-    // and stopping realtime track
+    /**
+     * Used to store current mode in preference and swap between starting
+     * and stopping realtime track
+     * @param isRealTime: Boolean indicating if user selected realtime mode
+     */
 
     private fun changeLocationMode(isRealTime: Boolean) {
         realtimeRequestUpdate = isRealTime

@@ -5,7 +5,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.liveData
 import com.sedra.nearbyplacesapp.data.PlaceRepository
 import com.sedra.nearbyplacesapp.data.model.ItemsMapper
+import com.sedra.nearbyplacesapp.util.CLIENT_ID
+import com.sedra.nearbyplacesapp.util.CLIENT_SECRET
 import com.sedra.nearbyplacesapp.util.Resource
+import com.sedra.nearbyplacesapp.util.VERSION
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import javax.inject.Inject
@@ -20,10 +23,10 @@ class PlaceViewModel @Inject constructor(
         emit(Resource.Loading)
         try {
             val response = repository.getRecommendedPlaces(
-                "W1BBIACSZHMTRJ4M5TJ5R2SR2YINIS5AO2WYGUV5OO3QW4BE",
-                "HSVOREBK5XNHLHPZ0AS10QIHOPWSJPJTDOJKRFZDTJREYTME",
+                CLIENT_ID,
+                CLIENT_SECRET,
                 "$latitude,$longitude",
-                "20210602",
+                VERSION,
                 1000
             )
             emit(
@@ -52,9 +55,9 @@ class PlaceViewModel @Inject constructor(
             emit(
                 Resource.Success(
                     data = repository.getPlaceImage(
-                        "W1BBIACSZHMTRJ4M5TJ5R2SR2YINIS5AO2WYGUV5OO3QW4BE",
-                        "HSVOREBK5XNHLHPZ0AS10QIHOPWSJPJTDOJKRFZDTJREYTME",
-                        "20210602",
+                        CLIENT_ID,
+                        CLIENT_SECRET,
+                        VERSION,
                         venueId
                     )
                 )

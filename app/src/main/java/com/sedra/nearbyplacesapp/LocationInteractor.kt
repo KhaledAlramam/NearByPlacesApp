@@ -33,6 +33,7 @@ class LocationInteractor {
         maxWaitTime = 60
     }
 
+    // get Location single time and emit to live data
     @SuppressLint("MissingPermission")
     fun getLastLocation(context: Context) {
         fusedLocationProvider = LocationServices.getFusedLocationProviderClient(context)
@@ -48,6 +49,7 @@ class LocationInteractor {
     }
 
 
+    //Start realtime location request
     @SuppressLint("MissingPermission")
     fun startLocationUpdates() {
         fusedLocationProvider?.requestLocationUpdates(
