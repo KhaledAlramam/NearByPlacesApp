@@ -2,5 +2,5 @@
 <resources>
     <dimen name="s_margin">8dp</dimen>
     <dimen name="x_margin">16dp</dimen>
-    <dimen name="header_text">18sp</dimen>
+    <dimen name="header_text">16sp</dimen>
 </resources>

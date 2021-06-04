@@ -16,10 +16,10 @@ class PlaceViewModel @Inject constructor(
 ) : ViewModel() {
 
     fun getNearbyPlaces(latitude: Double, longitude: Double) = liveData(Dispatchers.IO) {
-        emit(Resource.loading(data = null))
+        emit(Resource.Loading)
         try {
             emit(
-                Resource.success(
+                Resource.Success(
                     data = repository.getRecommendedPlaces(
                         "W1BBIACSZHMTRJ4M5TJ5R2SR2YINIS5AO2WYGUV5OO3QW4BE",
                         "HSVOREBK5XNHLHPZ0AS10QIHOPWSJPJTDOJKRFZDTJREYTME",
@@ -31,8 +31,7 @@ class PlaceViewModel @Inject constructor(
             )
         } catch (exception: Exception) {
             emit(
-                Resource.error(
-                    data = null,
+                Resource.Error(
                     message = exception.localizedMessage ?: "Error Occurred"
                 )
             )
@@ -46,10 +45,10 @@ class PlaceViewModel @Inject constructor(
     }
 
     fun getPlaceImage(venueId: String) = liveData(Dispatchers.IO) {
-        emit(Resource.loading(data = null))
+        emit(Resource.Loading)
         try {
             emit(
-                Resource.success(
+                Resource.Success(
                     data = repository.getPlaceImage(
                         "W1BBIACSZHMTRJ4M5TJ5R2SR2YINIS5AO2WYGUV5OO3QW4BE",
                         "HSVOREBK5XNHLHPZ0AS10QIHOPWSJPJTDOJKRFZDTJREYTME",
@@ -60,8 +59,7 @@ class PlaceViewModel @Inject constructor(
             )
         } catch (exception: Exception) {
             emit(
-                Resource.error(
-                    data = null,
+                Resource.Error(
                     message = exception.localizedMessage ?: "Error Occurred"
                 )
             )

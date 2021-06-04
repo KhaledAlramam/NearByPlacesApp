@@ -5,7 +5,6 @@ import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
@@ -21,7 +20,7 @@ import com.sedra.nearbyplacesapp.R
 import com.sedra.nearbyplacesapp.data.model.Group
 import com.sedra.nearbyplacesapp.data.model.Venue
 import com.sedra.nearbyplacesapp.databinding.ActivityMainBinding
-import com.sedra.nearbyplacesapp.util.Status.*
+import com.sedra.nearbyplacesapp.util.Resource
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -55,24 +54,16 @@ class MainActivity : AppCompatActivity() {
     private fun getNearbyPlaces(lat: Double, lng: Double) {
         viewModel.getNearbyPlaces(lat, lng).observe(this) {
             it?.let { resource ->
-                when (resource.status) {
-                    SUCCESS -> {
-                        resource.data?.let { nearByPlacesResponse ->
-                            if (nearByPlacesResponse.response.groups.isEmpty()) {
-                                showErrorMessage(getString(R.string.no_data), R.drawable.no_data)
-                            } else {
-                                populateAdapter(nearByPlacesResponse.response.groups)
-                            }
-                        }
-                    }
-                    ERROR -> {
-                        showErrorMessage(
-                            getString(R.string.wrong_error),
-                            R.drawable.connection_error
-                        )
-                    }
-                    LOADING -> {
-                        if (placeAdapter.currentList.isEmpty()) showLoadingIndicator()
+                when (resource) {
+                    is Resource.Error -> showErrorMessage(
+                        getString(R.string.wrong_error),
+                        R.drawable.connection_error
+                    )
+                    Resource.Loading -> if (placeAdapter.currentList.isEmpty()) showLoadingIndicator()
+                    is Resource.Success -> if (resource.data.response.groups.isEmpty()) {
+                        showErrorMessage(getString(R.string.no_data), R.drawable.no_data)
+                    } else {
+                        populateAdapter(resource.data.response.groups)
                     }
                 }
             }
@@ -96,21 +87,18 @@ class MainActivity : AppCompatActivity() {
         for (venue in venueList) {
             viewModel.getPlaceImage(venue.id).observe(this) {
                 it?.let { resource ->
-                    when (resource.status) {
-                        SUCCESS -> {
-                            resource.data?.let { photoResponse ->
-                                if (photoResponse.response.photos.items.isNotEmpty()) {
-                                    placeAdapter.updateImageList(
-                                        photoResponse.response.photos.items[0],
-                                        venueList.indexOf(venue)
-                                    )
-                                }
+                    when (resource) {
+                        is Resource.Error -> {
+                        }
+                        Resource.Loading -> {
+                        }
+                        is Resource.Success -> {
+                            if (resource.data.response.photos.items.isNotEmpty()) {
+                                placeAdapter.updateImageList(
+                                    resource.data.response.photos.items[0],
+                                    venueList.indexOf(venue)
+                                )
                             }
-                        }
-                        ERROR -> {
-                            Log.e("TAG", "getPlacesPhotos: ${resource.message}")
-                        }
-                        LOADING -> {
                         }
                     }
                 }
